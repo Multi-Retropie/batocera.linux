@@ -1,0 +1,141 @@
+From 3e9327a8584d2efa7de8bf8b2720aaa505dbb84a Mon Sep 17 00:00:00 2001
+From: Demetris Ierokipides <ierokipides.dem@gmail.com>
+Date: Tue, 8 Jun 2021 23:53:33 +0300
+Subject: [PATCH] u-boot: add overclock
+
+---
+ arch/arm/dts/sun8i-h3-orangepi-pc-plus.dts | 18 ------------
+ arch/arm/dts/sun8i-h3-orangepi-pc.dts      |  3 +-
+ arch/arm/dts/sun8i-h3.dtsi                 | 32 +++++++++++++++++++++-
+ configs/orangepi_pc_plus_defconfig         |  3 +-
+ 4 files changed, 35 insertions(+), 21 deletions(-)
+
+diff --git a/arch/arm/dts/sun8i-h3-orangepi-pc-plus.dts b/arch/arm/dts/sun8i-h3-orangepi-pc-plus.dts
+index 71fb7320..31118018 100644
+--- a/arch/arm/dts/sun8i-h3-orangepi-pc-plus.dts
++++ b/arch/arm/dts/sun8i-h3-orangepi-pc-plus.dts
+@@ -46,16 +46,6 @@
+ / {
+ 	model = "Xunlong Orange Pi PC Plus";
+ 	compatible = "xunlong,orangepi-pc-plus", "allwinner,sun8i-h3";
+-
+-	aliases {
+-		/* ethernet0 is the H3 emac, defined in sun8i-h3.dtsi */
+-		ethernet1 = &rtl8189ftv;
+-	};
+-};
+-
+-&emac {
+-	/* LEDs changed to active high on the plus */
+-	/delete-property/ allwinner,leds-active-low;
+ };
+ 
+ &mmc1 {
+@@ -63,14 +53,6 @@
+ 	bus-width = <4>;
+ 	non-removable;
+ 	status = "okay";
+-
+-	/*
+-	 * Explicitly define the sdio device, so that we can add an ethernet
+-	 * alias for it (which e.g. makes u-boot set a mac-address).
+-	 */
+-	rtl8189ftv: sdio_wifi@1 {
+-		reg = <1>;
+-	};
+ };
+ 
+ &mmc2 {
+diff --git a/arch/arm/dts/sun8i-h3-orangepi-pc.dts b/arch/arm/dts/sun8i-h3-orangepi-pc.dts
+index 5aff8ecc..4c639727 100644
+--- a/arch/arm/dts/sun8i-h3-orangepi-pc.dts
++++ b/arch/arm/dts/sun8i-h3-orangepi-pc.dts
+@@ -193,7 +193,8 @@
+ 		 * Use 1.0V as the minimum voltage instead.
+ 		 */
+ 		regulator-min-microvolt = <1000000>;
+-		regulator-max-microvolt = <1300000>;
++		regulator-max-microvolt = <1350000>;
++		regulator-ramp-delay = <100>;
+ 		regulator-boot-on;
+ 		regulator-always-on;
+ 	};
+diff --git a/arch/arm/dts/sun8i-h3.dtsi b/arch/arm/dts/sun8i-h3.dtsi
+index 20217e2c..370a55a3 100644
+--- a/arch/arm/dts/sun8i-h3.dtsi
++++ b/arch/arm/dts/sun8i-h3.dtsi
+@@ -47,6 +47,12 @@
+ 		compatible = "operating-points-v2";
+ 		opp-shared;
+ 
++        opp-480000000 {
++			opp-hz = /bits/ 64 <480000000>;
++			opp-microvolt = <1040000 1040000 1300000>;
++			clock-latency-ns = <244144>; /* 8 32k periods */
++		};
++
+ 		opp-648000000 {
+ 			opp-hz = /bits/ 64 <648000000>;
+ 			opp-microvolt = <1040000 1040000 1300000>;
+@@ -59,11 +65,35 @@
+ 			clock-latency-ns = <244144>; /* 8 32k periods */
+ 		};
+ 
++		opp-960000000 {
++			opp-hz = /bits/ 64 <960000000>;
++			opp-microvolt = <1200000 1200000 1300000>;
++			clock-latency-ns = <244144>; /* 8 32k periods */
++		};
++
+ 		opp-1008000000 {
+ 			opp-hz = /bits/ 64 <1008000000>;
+ 			opp-microvolt = <1200000 1200000 1300000>;
+ 			clock-latency-ns = <244144>; /* 8 32k periods */
+ 		};
++
++		opp-1104000000 {
++			opp-hz = /bits/ 64 <1104000000>;
++			opp-microvolt = <1320000 1320000 1320000>;
++			clock-latency-ns = <244144>; /* 8 32k periods */
++		};
++
++		opp-1200000000 {
++			opp-hz = /bits/ 64 <1200000000>;
++			opp-microvolt = <1320000 1320000 1320000>;
++			clock-latency-ns = <244144>; /* 8 32k periods */
++		};
++
++		opp-1296000000 {
++			opp-hz = /bits/ 64 <1296000000>;
++			opp-microvolt = <1340000 1340000 1340000>;
++			clock-latency-ns = <244144>; /* 8 32k periods */
++		};
+ 	};
+ 
+ 	cpus {
+@@ -206,7 +236,7 @@
+ 			resets = <&ccu RST_BUS_GPU>;
+ 
+ 			assigned-clocks = <&ccu CLK_GPU>;
+-			assigned-clock-rates = <384000000>;
++			assigned-clock-rates = <576000000>;
+ 		};
+ 
+ 		ths: thermal-sensor@1c25000 {
+diff --git a/configs/orangepi_pc_plus_defconfig b/configs/orangepi_pc_plus_defconfig
+index e2067748..9ee87842 100644
+--- a/configs/orangepi_pc_plus_defconfig
++++ b/configs/orangepi_pc_plus_defconfig
+@@ -2,7 +2,8 @@ CONFIG_ARM=y
+ CONFIG_ARCH_SUNXI=y
+ CONFIG_SPL=y
+ CONFIG_MACH_SUN8I_H3=y
+-CONFIG_DRAM_CLK=624
++CONFIG_DRAM_CLK=667
++CONFIG_SUPPORT_EMMC_BOOT=y
+ CONFIG_MMC_SUNXI_SLOT_EXTRA=2
+ CONFIG_DEFAULT_DEVICE_TREE="sun8i-h3-orangepi-pc-plus"
+ # CONFIG_SYS_MALLOC_CLEAR_ON_INIT is not set
+-- 
+2.25.1
+
